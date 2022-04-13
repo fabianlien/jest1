@@ -3,8 +3,9 @@
  */
 
 const { TestWatcher } = require("jest");
-const { game, newGame, showScore, addTurn, lightsOn, showTurns } = require("../game");
+const { game, newGame, showScore, addTurn, lightsOn, showTurns, playerTurn } = require("../game");
 
+jest.spyOn(window, "alert").mockImplementation(() => { })
 
 beforeAll(() => {
     let fs = require("fs");
@@ -33,6 +34,12 @@ describe("game object contains correct keys", () => {
     test("turnNumber key exists", () => {
         expect("turnNumber" in game).toBe(true);
     })
+    test("turnInProgress key exists", () => {
+        expect("turnInProgress" in game).toBe(true);
+    })
+    test("lastButton key exists", () => {
+        expect("lastButton" in game).toBe(true);
+    })
 });
 
 describe("newGame works", () => {
@@ -43,6 +50,7 @@ describe("newGame works", () => {
         game.currentGame = [1, 2 ,3]
         document.getElementById("score").innerText = "42";
         newGame();
+    
     });
     test("reset the game score", () => {
         expect(game.score).toEqual(0);
@@ -58,6 +66,11 @@ describe("newGame works", () => {
     });
     test("should display 0 for id of score", () => {
         expect(document.getElementById("score").innerText).toEqual(0);
+    });
+    test("all data-listener values in index.html should be true", () => {
+        for (let circ of document.getElementsByClassName("circle")) {
+            expect(circ.getAttribute("data-listener")).toEqual("true");
+        };
     });
 });
 
@@ -86,5 +99,25 @@ describe("gameplay works", () => {
         game.turnNumber = 42;
         showTurns();
         expect(game.turnNumber).toBe(0);
+    });
+    test("should increment the score by 1 if the turn is correct", () => {
+        game.playerMoves.push(game.currentGame[0])
+        playerTurn();
+        expect(game.score).toBe(1);
+    })
+    test("should call an alert if the move is wrong", () => {
+        game.playerMoves.push("wrong");
+        playerTurn();
+        expect(window.alert).toBeCalledWith("Wrong move!")
+    })
+    test("Should make gameInProgress key true during showTurns()", () => {
+        showTurns()
+        expect(game.turnInProgress).toBe(true);
+    });
+    test("clicking during showTurns sequence should fail", () => {
+        showTurns();
+        game.lastbutton = "";
+        document.getElementById("button3").click();
+        expect(game.lastButton).toEqual("");
     })
 });
